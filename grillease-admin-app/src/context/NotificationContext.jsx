@@ -8,13 +8,11 @@ const NotificationContext = createContext();
 const DATABASE_ID = import.meta.env.VITE_APPWRITE_DATABASE_ID;
 const ORDERS_COLLECTION_ID = import.meta.env.VITE_APPWRITE_ORDERS_COLLECTION_ID;
 const RESERVATIONS_COLLECTION_ID = import.meta.env.VITE_APPWRITE_RESERVATIONS_COLLECTION_ID;
-const MESSAGES_COLLECTION_ID = import.meta.env.VITE_APPWRITE_MESSAGES_COLLECTION_ID;
 
 export const NotificationProvider = ({ children }) => {
     const [notifications, setNotifications] = useState({
         orders: 0,
         reservations: 0,
-        messages: 0,
     });
     const [notificationHistory, setNotificationHistory] = useState([]);
     const [isPolling, setIsPolling] = useState(true);
@@ -29,71 +27,47 @@ export const NotificationProvider = ({ children }) => {
 
         let sub = null;
         try {
-            const topics = [
+            sub = realtime.subscribe([
                 `databases.${DATABASE_ID}.collections.${ORDERS_COLLECTION_ID}.documents`,
                 `databases.${DATABASE_ID}.collections.${RESERVATIONS_COLLECTION_ID}.documents`,
-            ];
-            if (MESSAGES_COLLECTION_ID) topics.push(`databases.${DATABASE_ID}.collections.${MESSAGES_COLLECTION_ID}.documents`);
-
-            sub = realtime.subscribe(topics, (response) => {
+            ], (response) => {
                 try {
                     const events = response?.events || [];
-
-                    // Attempt to extract collectionId from the events array first (more reliable)
-                    let collectionId = null;
-                    try {
-                        const joined = events.join(' ');
-                        const regex = new RegExp(`databases\\.${DATABASE_ID}\\.collections\\.([a-zA-Z0-9_-]+)\\.documents`);
-                        const m = joined.match(regex);
-                        if (m && m[1]) collectionId = m[1];
-                    } catch (e) {
-                        // ignore
-                    }
-
-                    // Fallback to payload document keys
-                    const payload = response?.payload || response?.document || {};
-                    if (!collectionId) collectionId = payload?.$collectionId || payload?.collectionId || null;
-
+                    // We're interested in create events
                     const isCreate = events.some(e => /\.create$/.test(e) || /documents.create/.test(e));
-                    const isUpdate = events.some(e => /\.update$/.test(e) || /documents.update/.test(e));
+                    if (!isCreate) return;
 
-                    // Debugging: log unexpected payloads to help diagnose realtime issues
-                    if (!collectionId) {
-                        console.debug('Realtime event without collectionId:', { response });
-                    }
+                    const payload = response?.payload || response?.document || {};
+                    const collectionId = payload?.$collectionId || payload?.collectionId || null;
 
-                    if (collectionId === ORDERS_COLLECTION_ID && isCreate) {
-                        const notification = { type: 'order', message: `1 new order received!`, timestamp: new Date(), count: 1 };
+                    if (collectionId === ORDERS_COLLECTION_ID) {
+                        // new order
+                        const notification = {
+                            type: 'order',
+                            message: `1 new order received!`,
+                            timestamp: new Date(),
+                            count: 1,
+                        };
                         setNotificationHistory((hist) => [notification, ...hist].slice(0, 50));
-                        setNotifications((prev) => ({ ...prev, orders: (prev.orders || 0) + 1 }));
+                        setNotifications((prev) => ({ ...prev, orders: prev.orders + 1 }));
                         playNotificationSound();
                         try { window.dispatchEvent(new CustomEvent('app:toast', { detail: { message: 'New order received', severity: 'info' } })); } catch(e) {}
                     }
 
-                    if (collectionId === RESERVATIONS_COLLECTION_ID && (isCreate || isUpdate)) {
-                        const notification = { type: 'reservation', message: `Reservation updated`, timestamp: new Date(), count: 1 };
+                    if (collectionId === RESERVATIONS_COLLECTION_ID) {
+                        const notification = {
+                            type: 'reservation',
+                            message: `1 new reservation received!`,
+                            timestamp: new Date(),
+                            count: 1,
+                        };
                         setNotificationHistory((hist) => [notification, ...hist].slice(0, 50));
-                        setNotifications((prev) => ({ ...prev, reservations: (prev.reservations || 0) + 1 }));
+                        setNotifications((prev) => ({ ...prev, reservations: prev.reservations + 1 }));
                         playNotificationSound();
-                        try { window.dispatchEvent(new CustomEvent('app:toast', { detail: { message: 'Reservation updated', severity: 'info' } })); } catch(e) {}
-                    }
-
-                    if (MESSAGES_COLLECTION_ID && collectionId === MESSAGES_COLLECTION_ID) {
-                        // Treat create as new unread message
-                        if (isCreate) {
-                            const notification = { type: 'message', message: `New message received`, timestamp: new Date(), count: 1 };
-                            setNotificationHistory((hist) => [notification, ...hist].slice(0, 50));
-                            setNotifications((prev) => ({ ...prev, messages: (prev.messages || 0) + 1 }));
-                            playNotificationSound();
-                            try { window.dispatchEvent(new CustomEvent('app:toast', { detail: { message: 'New message', severity: 'info' } })); } catch(e) {}
-                        }
-                        // For updates (e.g., read flags), fall back to polling which will correct counts on next interval
-                        if (isUpdate) {
-                            console.debug('Message document updated (realtime):', payload?.$id || payload?.id || null);
-                        }
+                        try { window.dispatchEvent(new CustomEvent('app:toast', { detail: { message: 'New reservation received', severity: 'info' } })); } catch(e) {}
                     }
                 } catch (err) {
-                    console.error('Realtime handler error:', err, response);
+                    console.warn('Realtime handler error:', err);
                 }
             });
         } catch (err) {
@@ -107,7 +81,7 @@ export const NotificationProvider = ({ children }) => {
                 // ignore
             }
         };
-    }, [playNotificationSound, DATABASE_ID, ORDERS_COLLECTION_ID, RESERVATIONS_COLLECTION_ID, MESSAGES_COLLECTION_ID]);
+    }, [playNotificationSound]);
 
     const checkNotifications = useCallback(async () => {
         if (!isPolling) return;
@@ -128,21 +102,6 @@ export const NotificationProvider = ({ children }) => {
                 [Query.equal('status', 'new')]
             );
             const reservationsCount = reservationsResponse.total || 0;
-
-            // Check for unread messages
-            let messagesCount = 0;
-            try {
-                if (MESSAGES_COLLECTION_ID) {
-                    const msgs = await databases.listDocuments(
-                        DATABASE_ID,
-                        MESSAGES_COLLECTION_ID,
-                        [Query.equal('read', false)]
-                    );
-                    messagesCount = msgs.total || 0;
-                }
-            } catch (e) {
-                console.warn('Failed to fetch unread messages count', e);
-            }
 
             setNotifications((prev) => {
                 const prevOrders = prev.orders;
@@ -176,7 +135,6 @@ export const NotificationProvider = ({ children }) => {
                 return {
                     orders: ordersCount,
                     reservations: reservationsCount,
-                    messages: messagesCount,
                 };
             });
         } catch (error) {
@@ -201,7 +159,7 @@ export const NotificationProvider = ({ children }) => {
         return () => clearInterval(interval);
     }, [checkNotifications, isPolling]);
 
-    const totalNotifications = (notifications.orders || 0) + (notifications.reservations || 0) + (notifications.messages || 0);
+    const totalNotifications = notifications.orders + notifications.reservations;
 
     return (
         <NotificationContext.Provider

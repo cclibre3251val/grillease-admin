@@ -1,4 +1,0 @@
-- [ ] Import SalesManager and UserManager in DashboardLayout.jsx
-- [ ] Add ThemeProvider to App.jsx
-- [ ] Remove centering styles from index.css
-- [ ] Test the dashboard display

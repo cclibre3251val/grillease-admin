@@ -14,7 +14,6 @@ import EventIcon from '@mui/icons-material/Event';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import PendingIcon from '@mui/icons-material/Pending';
 import CancelIcon from '@mui/icons-material/Cancel';
-import MessageManager from './MessageManager';
 import { normalizeReservationDoc } from '../lib/schemaUtils';
 
 const DATABASE_ID = import.meta.env.VITE_APPWRITE_DATABASE_ID;
@@ -191,7 +190,7 @@ const ReservationManager = () => {
                 createdAt: new Date().toISOString(),
             };
 
-            await databases.createDocument(DATABASE_ID, RESERVATIONS_COLLECTION_ID, undefined, payload);
+            await databases.createDocument(DATABASE_ID, RESERVATIONS_COLLECTION_ID, 'unique()', payload);
             setNewResOpen(false);
             fetchReservations();
             setSnackbar({ open: true, message: 'Reservation created', severity: 'success' });
@@ -453,22 +452,6 @@ const ReservationManager = () => {
                     </Card>
                 </Grid>
             </Grid>
-            {/* Reservation Messages Dialog */}
-            <Dialog open={messageOpen} onClose={() => setMessageOpen(false)} fullWidth maxWidth="sm">
-                <DialogTitle>Reservation Messages</DialogTitle>
-                <DialogContent>
-                    {selectedReservationId ? (
-                        <Box sx={{ height: 400 }}>
-                            <MessageManager filterReservationId={selectedReservationId} />
-                        </Box>
-                    ) : (
-                        <Typography color="text.secondary">No reservation selected.</Typography>
-                    )}
-                </DialogContent>
-                <DialogActions>
-                    <Button onClick={() => setMessageOpen(false)}>Close</Button>
-                </DialogActions>
-            </Dialog>
             {/* Create Reservation Dialog */}
             <Dialog open={newResOpen} onClose={() => setNewResOpen(false)} fullWidth maxWidth="sm">
                 <DialogTitle>Create Reservation</DialogTitle>
@@ -621,11 +604,6 @@ const ReservationManager = () => {
                                         >
                                             <CancelIcon />
                                         </IconButton>
-                                        <Badge badgeContent={unreadCounts[res.$id] || 0} color="error" invisible={!unreadCounts[res.$id]}>
-                                            <Button variant="text" size="small" onClick={() => { setSelectedReservationId(res.$id); setMessageOpen(true); }}>
-                                                Messages
-                                            </Button>
-                                        </Badge>
                                     </Box>
                                 </CardContent>
                             </Card>
@@ -777,11 +755,6 @@ const ReservationManager = () => {
                                         >
                                             <CancelIcon />
                                         </IconButton>
-                                        <Badge badgeContent={unreadCounts[res.$id] || 0} color="error" invisible={!unreadCounts[res.$id]}>
-                                            <Button variant="text" size="small" onClick={() => { setSelectedReservationId(res.$id); setMessageOpen(true); }}>
-                                                Messages
-                                            </Button>
-                                        </Badge>
                                     </Box>
                                 </CardContent>
                             </Card>
@@ -920,11 +893,6 @@ const ReservationManager = () => {
                                         >
                                             <CancelIcon />
                                         </IconButton>
-                                        <Badge badgeContent={unreadCounts[res.$id] || 0} color="error" invisible={!unreadCounts[res.$id]}>
-                                            <Button variant="text" size="small" onClick={() => { setSelectedReservationId(res.$id); setMessageOpen(true); }}>
-                                                Messages
-                                            </Button>
-                                        </Badge>
                                     </Box>
                                 </CardContent>
                             </Card>

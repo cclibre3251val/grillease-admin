@@ -4,62 +4,84 @@ import { ID } from 'appwrite';
 
 export const authService = {
     login: async (email, password) => {
-        // Logout any existing session first
         try {
-            if (typeof account.deleteSession === 'function') {
-                await account.deleteSession('current');
+            // Try the most common method first
+            if (typeof account.createEmailSession === 'function') {
+                return await account.createEmailSession(email, password);
             }
-        } catch (e) {
-            // Ignore if no session
+            
+            // Try alternative method names
+            if (typeof account.createEmailPasswordSession === 'function') {
+                return await account.createEmailPasswordSession(email, password);
+            }
+            
+            if (typeof account.createSession === 'function') {
+                return await account.createSession(email, password);
+            }
+            
+            throw new Error('No suitable login method found in Appwrite SDK');
+        } catch (error) {
+            console.error('Login failed:', error);
+            // Handle specific Appwrite error codes
+            if (error.code === 422) {
+                throw new Error('Invalid email or password. Please check your credentials.');
+            } else if (error.code === 409) {
+                throw new Error('A session already exists. Please try logging in again.');
+            } else if (error.code === 400) {
+                throw new Error('Invalid request. Please check your input and try again.');
+            } else if (error.code === 401) {
+                throw new Error('Authentication failed. Please check your credentials.');
+            }
+            throw new Error(error.message || 'Login failed. Please check your credentials.');
         }
-
-        // Prefer SDK method createEmailPasswordSession when available
-        if (typeof account.createEmailPasswordSession === 'function') {
-            return await account.createEmailPasswordSession(email, password);
-        }
-
-        // Fallback to REST endpoint
-        const endpoint = import.meta.env.VITE_APPWRITE_ENDPOINT || 'https://[APPWRITE_HOST]/v1';
-        const project = import.meta.env.VITE_APPWRITE_PROJECT || '[YOUR_PROJECT_ID]';
-        const res = await fetch(`${endpoint}/account/sessions`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-Appwrite-Project': project,
-            },
-            body: JSON.stringify({ email, password }),
-        });
-        if (!res.ok) {
-            const t = await res.text();
-            throw new Error(t || 'Failed to create session via REST');
-        }
-        return await res.json();
     },
 
     logout: async () => {
-        // Support multiple SDK variants
-        if (typeof account.deleteSession === 'function') {
-            return await account.deleteSession('current');
-        }
-
-        if (typeof account.deleteSessions === 'function') {
-            // some versions provide deleteSessions
-            return await account.deleteSessions();
-        }
-
-        if (typeof account.createEmailSession === 'undefined' && typeof account.createSession === 'undefined') {
-            throw new Error('Auth method not available on Appwrite SDK for logout');
+        try {
+            // Try the most common method first
+            if (typeof account.deleteSession === 'function') {
+                return await account.deleteSession('current');
+            }
+            
+            // Try alternative method names
+            if (typeof account.deleteSessions === 'function') {
+                return await account.deleteSessions();
+            }
+            
+            if (typeof account.getSession === 'function') {
+                // If we can't delete, at least clear local storage
+                localStorage.removeItem('appwrite_session');
+                return;
+            }
+            
+            throw new Error('No suitable logout method found in Appwrite SDK');
+        } catch (error) {
+            console.error('Logout error:', error);
+            // Even if logout fails, clear local storage
+            localStorage.removeItem('appwrite_session');
         }
     },
 
     getCurrentUser: async () => {
         try {
-            // newer SDKs use get() or getAccount()
-            if (typeof account.get === 'function') return await account.get();
-            if (typeof account.getAccount === 'function') return await account.getAccount();
-            throw new Error('Account retrieval method not found on Appwrite SDK');
+            // Try the most common method first
+            if (typeof account.get === 'function') {
+                return await account.get();
+            }
+            
+            // Try alternative method names
+            if (typeof account.getAccount === 'function') {
+                return await account.getAccount();
+            }
+            
+            if (typeof account.getSession === 'function') {
+                return await account.getSession('current');
+            }
+            
+            throw new Error('No suitable method to get current user found in Appwrite SDK');
         } catch (error) {
-            if (error.code === 401) {
+            console.error('Get current user failed:', error);
+            if (error.code === 401 || error.message.includes('401')) {
                 return null;
             }
             throw error;

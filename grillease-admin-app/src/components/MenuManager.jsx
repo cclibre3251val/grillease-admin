@@ -11,7 +11,7 @@ import ExpandLessIcon from '@mui/icons-material/ExpandLess';
 import SaveIcon from '@mui/icons-material/Save';
 
 const DATABASE_ID = import.meta.env.VITE_APPWRITE_DATABASE_ID;
-const MENU_COLLECTION_ID = import.meta.env.VITE_APPWRITE_MENU_COLLECTION_ID;
+const MENU_COLLECTION_ID = import.meta.env.VITE_APPWRITE_MENU_COLLECTION_ID || 'menu';
 const CATEGORIES_COLLECTION_ID = import.meta.env.VITE_APPWRITE_CATEGORIES_COLLECTION_ID;
 const MENU_BUCKET_ID = import.meta.env.VITE_APPWRITE_MENU_BUCKET_ID;
 
@@ -75,20 +75,30 @@ const MenuManager = () => {
 
     const fetchMenuItems = async () => {
         try {
+            console.log('🔍 Fetching menu items from collection:', MENU_COLLECTION_ID);
             const response = await databases.listDocuments(DATABASE_ID, MENU_COLLECTION_ID);
+            console.log('📊 Response:', response);
+            console.log('📊 Documents count:', response.documents?.length || 0);
+            
             const docs = (response.documents || []).map(d => ({
                 $id: d.$id,
-                name: d.name || d.title || d.itemName || '',
-                price: parseFloat(d.price || d.amount || d.itemPrice || 0) || 0,
-                category: d.category || d.type || d.itemCategory || 'Uncategorized',
-                image_url: d.image_url || d.image || d.imageUrl || d.itemImage || '',
-                description: d.description || d.desc || d.itemDescription || '',
-                bestSeller: !!d.bestSeller || !!d.isBestSeller || false,
+                name: d.name || '',
+                price: parseFloat(d.price || 0) || 0,
+                category: d.category || 'Uncategorized',
+                image_url: d.image || d.image_url || '',
+                description: d.description || '',
+                bestSeller: !!d.bestSeller || false,
             }));
+            
+            console.log('📋 Processed documents:', docs);
             setMenuItems(docs);
+            
+            if (docs.length === 0) {
+                setMessage('No menu items found. Please add some items.');
+            }
         } catch (error) {
             console.error("Error fetching menu:", error);
-            setMessage('Error loading menu items.');
+            setMessage('Error loading menu items. Check console for details.');
         }
     };
 
@@ -248,25 +258,23 @@ const MenuManager = () => {
             <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', px: { xs: 1, sm: 0 } }}>
                 <Box
                     sx={{
-                        backgroundColor: 'background.paper',
+                        backgroundColor: '#f5f5f5',
                         borderRadius: 2,
                         p: 2.5,
                         mb: 3,
                         width: '100%',
                         maxWidth: { xs: '100%', sm: '600px' },
-                        boxShadow: '0px 1px 3px rgba(0,0,0,0.1)',
-                        border: '1px solid',
-                        borderColor: 'divider',
+                        border: '1px solid #ddd',
                     }}
                 >
                     <Typography
-                        variant="h5"
+                        variant="h4"
                         component="h2"
                         sx={{
-                            fontSize: { xs: '1.25rem', sm: '1.5rem' },
+                            fontSize: { xs: '1.5rem', sm: '2rem' },
                             textAlign: 'center',
-                            color: 'text.primary',
-                            fontWeight: 600,
+                            color: '#333',
+                            fontWeight: 'bold',
                         }}
                     >
                         Menu Management
@@ -485,18 +493,19 @@ const MenuManager = () => {
                             gap: 1,
                         }}>
                             <Button
-                                variant={selectedCategory === '' ? 'contained' : 'outlined'}
+                                variant="text"
                                 onClick={() => setSelectedCategory('')}
                                 sx={{
                                     fontSize: '0.875rem',
                                     textTransform: 'none',
-                                    borderRadius: 20,
                                     px: 2,
                                     py: 1,
-                                    backgroundColor: selectedCategory === '' ? '#f5f5f5' : 'transparent',
-                                    color: selectedCategory === '' ? 'text.primary' : 'text.secondary',
-                                    border: '1px solid',
-                                    borderColor: 'divider',
+                                    color: selectedCategory === '' ? 'primary.main' : 'text.primary',
+                                    fontWeight: selectedCategory === '' ? 'bold' : 'normal',
+                                    '&:hover': {
+                                        color: 'primary.main',
+                                        backgroundColor: 'transparent',
+                                    },
                                 }}
                             >
                                 Uncategorized
@@ -504,20 +513,18 @@ const MenuManager = () => {
                             {categories.map((category) => (
                                 <Button
                                     key={category.$id}
-                                    variant={selectedCategory === category.name ? 'contained' : 'outlined'}
+                                    variant="text"
                                     onClick={() => setSelectedCategory(category.name)}
                                     sx={{
                                         fontSize: '0.875rem',
                                         textTransform: 'none',
-                                        borderRadius: 20,
                                         px: 2,
                                         py: 1,
-                                        backgroundColor: selectedCategory === category.name ? category.color : 'transparent',
-                                        color: selectedCategory === category.name ? 'white' : 'text.primary',
-                                        border: '1px solid',
-                                        borderColor: category.color,
+                                        color: selectedCategory === category.name ? category.color : 'text.primary',
+                                        fontWeight: selectedCategory === category.name ? 'bold' : 'normal',
                                         '&:hover': {
-                                            backgroundColor: selectedCategory === category.name ? category.color : 'rgba(0,0,0,0.04)',
+                                            color: category.color,
+                                            backgroundColor: 'transparent',
                                         },
                                     }}
                                 >

@@ -9,42 +9,60 @@ export const AuthProvider = ({ children }) => {
 
     const login = async (email, password) => {
         try {
-            await authService.login(email, password);
+            setLoading(true);
+            const result = await authService.login(email, password);
             const currentUser = await authService.getCurrentUser();
             setUser(currentUser);
             return currentUser;
         } catch (error) {
             console.error('Login error:', error);
-            throw new Error(error.message || 'Login failed. Please try again.');
+            throw new Error(error.message || 'Login failed. Please check your credentials.');
+        } finally {
+            setLoading(false);
         }
     };
 
     const logout = async () => {
         try {
+            setLoading(true);
             await authService.logout();
             setUser(null);
         } catch (error) {
-            console.error('❌ Logout error:', error);
-            throw new Error(error.message || 'Logout failed. Please try again.');
+            console.error('Logout error:', error);
+            // Even if logout fails, clear the user state
+            setUser(null);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const checkAuth = async () => {
+        try {
+            setLoading(true);
+            const currentUser = await authService.getCurrentUser();
+            setUser(currentUser);
+            return !!currentUser;
+        } catch (error) {
+            console.error('Auth check failed:', error);
+            setUser(null);
+            return false;
+        } finally {
+            setLoading(false);
         }
     };
 
     useEffect(() => {
-        const checkCurrentUser = async () => {
-            try {
-                const currentUser = await authService.getCurrentUser();
-                setUser(currentUser);
-            } catch (error) {
-                setUser(null);
-            } finally {
-                setLoading(false);
-            }
-        };
-        checkCurrentUser();
+        checkAuth();
     }, []);
 
     return (
-        <AuthContext.Provider value={{ user, login, logout, loading }}>
+        <AuthContext.Provider value={{ 
+            user, 
+            login, 
+            logout, 
+            loading, 
+            checkAuth 
+        }}>
             {children}
         </AuthContext.Provider>
     );

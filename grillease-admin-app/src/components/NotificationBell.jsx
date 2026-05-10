@@ -17,8 +17,6 @@ import {
 } from '@mui/material';
 import NotificationsIcon from '@mui/icons-material/Notifications';
 import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
-import EventIcon from '@mui/icons-material/Event';
-import ChatIcon from '@mui/icons-material/Chat';
 import ClearIcon from '@mui/icons-material/Clear';
 import { useNavigate } from 'react-router-dom';
 
@@ -45,15 +43,6 @@ const NotificationBell = () => {
         handleClose();
         // Navigate to orders view - you'll need to update DashboardLayout to handle this
         window.dispatchEvent(new CustomEvent('navigate', { detail: 'orders' }));
-    };
-
-    const handleViewReservations = () => {
-        handleClose();
-        window.dispatchEvent(new CustomEvent('navigate', { detail: 'reservations' }));
-    };
-    const handleViewMessages = () => {
-        handleClose();
-        window.dispatchEvent(new CustomEvent('navigate', { detail: 'messages' }));
     };
 
     const open = Boolean(anchorEl);
@@ -150,43 +139,6 @@ const NotificationBell = () => {
                                 </Box>
                             )}
 
-                            {notifications.reservations > 0 && (
-                                <Box sx={{ mb: 1 }}>
-                                    <Button
-                                        fullWidth
-                                        variant="contained"
-                                        color="secondary"
-                                        startIcon={<EventIcon />}
-                                        onClick={handleViewReservations}
-                                        sx={{
-                                            justifyContent: 'flex-start',
-                                            mb: 1,
-                                            borderRadius: 2,
-                                        }}
-                                    >
-                                        {notifications.reservations} New Reservation{notifications.reservations > 1 ? 's' : ''}
-                                    </Button>
-                                </Box>
-                            )}
-
-                            {notifications.messages > 0 && (
-                                <Box sx={{ mb: 1 }}>
-                                    <Button
-                                        fullWidth
-                                        variant="contained"
-                                        color="info"
-                                        startIcon={<ChatIcon />}
-                                        onClick={handleViewMessages}
-                                        sx={{
-                                            justifyContent: 'flex-start',
-                                            mb: 1,
-                                            borderRadius: 2,
-                                        }}
-                                    >
-                                        {notifications.messages} New Message{notifications.messages > 1 ? 's' : ''}
-                                    </Button>
-                                </Box>
-                            )}
 
                             {notificationHistory.length > 0 && (
                                 <>
