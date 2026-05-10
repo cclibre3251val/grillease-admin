@@ -20,6 +20,7 @@ import { useTheme } from '@mui/material/styles';
 import useMediaQuery from '@mui/material/useMediaQuery';
 import MenuIcon from '@mui/icons-material/Menu';
 import LogoutIcon from '@mui/icons-material/Logout';
+import HomeIcon from '@mui/icons-material/Home';
 import MenuBookIcon from '@mui/icons-material/MenuBook';
 import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
 import EventIcon from '@mui/icons-material/Event';
@@ -70,9 +71,6 @@ const DashboardLayout = () => {
                         <ListItemText primary={item.name} />
                     </ListItem>
                 ))}
-                <ListItem button onClick={() => window.open('https://grillease-admin-app.vercel.app', '_blank')}>
-                    <ListItemText primary="🏠 Grillease Home" sx={{ color: 'primary.main' }} />
-                </ListItem>
                 <ListItem button onClick={() => { logout(); navigate('/admin/login'); }}>
                     <ListItemText primary="Logout" sx={{ color: 'error.main' }} />
                 </ListItem>
@@ -95,12 +93,24 @@ const DashboardLayout = () => {
                     >
                         <MenuIcon />
                     </IconButton>
-                    {/* Logo Space */}
-                    <Box sx={{ display: 'flex', alignItems: 'center', mr: 2 }}>
-                        <Typography variant="h6" component="div" sx={{ fontWeight: 'bold' }}>
+                    {/* Logo Space - clickable home button */}
+                    <Button
+                        color="inherit"
+                        onClick={() => window.open('https://grillease-admin-app.vercel.app', '_blank')}
+                        sx={{
+                            textTransform: 'none',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 0.5,
+                            mr: 2,
+                            '&:hover': { backgroundColor: 'rgba(255,255,255,0.1)' }
+                        }}
+                    >
+                        <HomeIcon />
+                        <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
                             Grillease
                         </Typography>
-                    </Box>
+                    </Button>
                     <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
                         Staff Dashboard
                     </Typography>
@@ -217,10 +227,14 @@ const MobileBottomNav = ({ navigate }) => {
                 value={value}
                 onChange={(event, newValue) => {
                     setValue(newValue);
-                    navigate(newValue);
+                    if (newValue === 'home') {
+                        window.open('https://grillease-admin-app.vercel.app', '_blank');
+                    } else {
+                        navigate(newValue);
+                    }
                 }}
             >
-                <BottomNavigationAction label="Stats" value="/admin/dashboard" icon={<MenuBookIcon />} />
+                <BottomNavigationAction label="Grillease" value="home" icon={<HomeIcon />} />
                 <BottomNavigationAction label="Order Processing" value="/admin/dashboard/orders" icon={<ShoppingCartIcon />} />
                 <BottomNavigationAction label="Reservation Management" value="/admin/dashboard/reservations" icon={<EventIcon />} />
                 <BottomNavigationAction label="Menu Management" value="/admin/dashboard/menu" icon={<MenuBookIcon />} />
