@@ -53,6 +53,7 @@ const DashboardLayout = () => {
 
     // Define nav items based on role
     const baseNavItems = [
+        { name: 'Dashboard Home', path: '/admin/dashboard' },
         { name: 'Order Processing', path: '/admin/dashboard/orders' },
         { name: 'Reservation Management', path: '/admin/dashboard/reservations' },
         { name: 'Menu Management', path: '/admin/dashboard/menu' },
@@ -61,7 +62,7 @@ const DashboardLayout = () => {
     const drawer = (
         <Box onClick={handleDrawerToggle} sx={{ textAlign: 'center' }}>
             <Typography variant="h6" sx={{ my: 2 }}>
-                Grillease Admin
+                Grillease Staff
             </Typography>
             <List>
                 {baseNavItems.map((item) => (
@@ -69,6 +70,9 @@ const DashboardLayout = () => {
                         <ListItemText primary={item.name} />
                     </ListItem>
                 ))}
+                <ListItem button onClick={() => window.open('https://grillease-admin-app.vercel.app', '_blank')}>
+                    <ListItemText primary="🏠 Grillease Home" sx={{ color: 'primary.main' }} />
+                </ListItem>
                 <ListItem button onClick={() => { logout(); navigate('/admin/login'); }}>
                     <ListItemText primary="Logout" sx={{ color: 'error.main' }} />
                 </ListItem>
@@ -98,7 +102,7 @@ const DashboardLayout = () => {
                         </Typography>
                     </Box>
                     <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
-                        Admin Dashboard
+                        Staff Dashboard
                     </Typography>
 
                     {/* Notification bell */}
