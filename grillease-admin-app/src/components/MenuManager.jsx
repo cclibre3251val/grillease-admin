@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { databases, storage } from '../lib/appwrite';
-import { ID } from 'appwrite';
+import { ID, Query } from 'appwrite';
 import { TextField, Button, Typography, Container, Box, Alert, Checkbox, FormControlLabel, IconButton, Dialog, DialogTitle, DialogContent, DialogActions, Select, MenuItem, InputLabel, FormControl, Chip, Accordion, AccordionSummary, AccordionDetails, List, ListItem, ListItemText, ListItemSecondaryAction, Switch, Collapse, Divider, Grid, Card, CardContent } from '@mui/material';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import DeleteIcon from '@mui/icons-material/Delete';
@@ -61,7 +61,9 @@ const MenuManager = () => {
 
     const fetchCategories = async () => {
         try {
-            const response = await databases.listDocuments(DATABASE_ID, CATEGORIES_COLLECTION_ID);
+            const response = await databases.listDocuments(DATABASE_ID, CATEGORIES_COLLECTION_ID, [
+                Query.limit(100)
+            ]);
             const docs = (response.documents || []).map(d => ({
                 $id: d.$id,
                 name: d.name || '',
@@ -76,7 +78,9 @@ const MenuManager = () => {
     const fetchMenuItems = async () => {
         try {
             console.log('🔍 Fetching menu items from collection:', MENU_COLLECTION_ID);
-            const response = await databases.listDocuments(DATABASE_ID, MENU_COLLECTION_ID);
+            const response = await databases.listDocuments(DATABASE_ID, MENU_COLLECTION_ID, [
+                Query.limit(500)
+            ]);
             console.log('📊 Response:', response);
             console.log('📊 Documents count:', response.documents?.length || 0);
             
@@ -357,40 +361,39 @@ const MenuManager = () => {
                             },
                         }}
                     />
-                    <FormControl fullWidth margin="normal">
-                        <InputLabel id="category-label">Category</InputLabel>
-                        <Select
-                            labelId="category-label"
-                            value={selectedCategory}
-                            onChange={(e) => setSelectedCategory(e.target.value)}
-                            label="Category"
-                            sx={{
-                                '& .MuiInputBase-root': {
-                                    fontSize: { xs: '1rem', sm: '1rem' },
-                                },
-                            }}
-                        >
-                            <MenuItem value="">
-                                <em>Uncategorized</em>
-                            </MenuItem>
-                            {categories.map((category) => (
-                                <MenuItem key={category.$id} value={category.name}>
-                                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                        <Box
-                                            sx={{
-                                                width: 16,
-                                                height: 16,
-                                                borderRadius: '50%',
-                                                backgroundColor: category.color,
-                                                border: '1px solid rgba(0,0,0,0.2)',
-                                            }}
-                                        />
-                                        {category.name}
-                                    </Box>
-                                </MenuItem>
+                    <TextField
+                        label="Category"
+                        fullWidth
+                        margin="normal"
+                        value={selectedCategory}
+                        onChange={(e) => setSelectedCategory(e.target.value)}
+                        placeholder="Type a category name (e.g. Burgers, Drinks, etc.)"
+                        helperText="You can type a new category or use an existing one"
+                        sx={{
+                            '& .MuiInputBase-root': {
+                                fontSize: { xs: '1rem', sm: '1rem' },
+                            },
+                        }}
+                    />
+                    {categories.length > 0 && (
+                        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, mt: 1, mb: 1 }}>
+                            {categories.map((cat) => (
+                                <Chip
+                                    key={cat.$id}
+                                    label={cat.name}
+                                    size="small"
+                                    onClick={() => setSelectedCategory(cat.name)}
+                                    sx={{
+                                        backgroundColor: selectedCategory === cat.name ? cat.color : 'transparent',
+                                        color: selectedCategory === cat.name ? '#fff' : 'text.primary',
+                                        border: `1px solid ${cat.color}`,
+                                        cursor: 'pointer',
+                                        '&:hover': { backgroundColor: cat.color, color: '#fff' },
+                                    }}
+                                />
                             ))}
-                        </Select>
-                    </FormControl>
+                        </Box>
+                    )}
                     <FormControlLabel
                         control={
                             <Checkbox
@@ -709,6 +712,166 @@ const MenuManager = () => {
                         );
                     })
                 )}
+
+                {/* Items with categories not in the categories collection */}
+                {(() => {
+                    const categoryNames = categories.map(c => c.name);
+                    const otherItems = menuItems.filter(item => {
+                        const cat = item.category || '';
+                        return cat !== '' && cat !== 'Uncategorized' && !categoryNames.includes(cat);
+                    });
+                    if (otherItems.length === 0) return null;
+                    return (
+                        <Box sx={{ mb: 4 }}>
+                            <Box
+                                sx={{
+                                    borderRadius: 2,
+                                    p: 2,
+                                    mb: 2,
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'space-between',
+                                    border: '1px solid',
+                                    borderColor: 'divider',
+                                    backgroundColor: 'background.paper',
+                                }}
+                            >
+                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                                    <Typography variant="h6" sx={{ fontWeight: 'bold', color: 'text.primary' }}>
+                                        OTHER ITEMS
+                                    </Typography>
+                                    <Chip
+                                        label={`${otherItems.length} items`}
+                                        variant="outlined"
+                                        size="small"
+                                    />
+                                </Box>
+                            </Box>
+                            <Grid container spacing={2}>
+                                {otherItems.map((item) => (
+                                    <Grid item xs={12} sm={6} md={4} key={item.$id}>
+                                        <Card
+                                            variant="outlined"
+                                            sx={{
+                                                height: '100%',
+                                                borderRadius: 3,
+                                                border: '1px solid',
+                                                borderColor: 'divider',
+                                                backgroundColor: 'background.paper',
+                                                boxShadow: '0px 4px 12px rgba(0,0,0,0.08)',
+                                                transition: 'all 0.3s ease-in-out',
+                                                '&:hover': {
+                                                    transform: 'translateY(-4px)',
+                                                    boxShadow: '0px 8px 24px rgba(0,0,0,0.15)',
+                                                },
+                                            }}
+                                        >
+                                            <CardContent sx={{ p: 2.5 }}>
+                                                {item.image_url && (
+                                                    <Box
+                                                        sx={{
+                                                            borderRadius: 2,
+                                                            overflow: 'hidden',
+                                                            mb: 1.5,
+                                                            boxShadow: '0px 2px 8px rgba(0,0,0,0.1)',
+                                                        }}
+                                                    >
+                                                        <img
+                                                            src={item.image_url}
+                                                            alt={item.name}
+                                                            style={{
+                                                                width: '100%',
+                                                                height: '150px',
+                                                                objectFit: 'cover',
+                                                                display: 'block',
+                                                            }}
+                                                        />
+                                                    </Box>
+                                                )}
+                                                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 1 }}>
+                                                    <Typography
+                                                        variant="h6"
+                                                        sx={{ fontSize: { xs: '1rem', sm: '1.25rem' }, fontWeight: 'bold' }}
+                                                    >
+                                                        {item.name}
+                                                    </Typography>
+                                                    {item.bestSeller && (
+                                                        <Chip
+                                                            label="Best Seller"
+                                                            color="warning"
+                                                            size="small"
+                                                            icon={<span style={{ fontSize: '1rem' }}>⭐</span>}
+                                                        />
+                                                    )}
+                                                </Box>
+                                                <Typography
+                                                    variant="body1"
+                                                    sx={{ mb: 1, fontSize: { xs: '1rem', sm: '1.125rem' }, fontWeight: 'bold', color: 'primary.main' }}
+                                                >
+                                                    ₱ {parseFloat(item.price).toFixed(2)}
+                                                </Typography>
+                                                {item.description && (
+                                                    <Typography
+                                                        variant="body2"
+                                                        sx={{ mb: 1.5, fontSize: { xs: '0.875rem', sm: '0.875rem' }, color: 'text.secondary', minHeight: 40 }}
+                                                    >
+                                                        {item.description}
+                                                    </Typography>
+                                                )}
+                                                <Box sx={{
+                                                    display: 'flex',
+                                                    flexDirection: { xs: 'column', sm: 'row' },
+                                                    gap: 1,
+                                                    mt: 2,
+                                                }}>
+                                                    <Button
+                                                        variant="outlined"
+                                                        color="primary"
+                                                        size="medium"
+                                                        sx={{
+                                                            minHeight: { xs: 44, sm: 36 },
+                                                            fontSize: { xs: '0.95rem', sm: '0.875rem' },
+                                                            flex: 1,
+                                                        }}
+                                                        onClick={() => openEditDialog(item)}
+                                                    >
+                                                        Edit
+                                                    </Button>
+                                                    <Button
+                                                        variant="outlined"
+                                                        color={item.bestSeller ? "secondary" : "primary"}
+                                                        size="medium"
+                                                        sx={{
+                                                            minHeight: { xs: 44, sm: 36 },
+                                                            fontSize: { xs: '0.95rem', sm: '0.875rem' },
+                                                            flex: 1,
+                                                        }}
+                                                        onClick={() => toggleBestSeller(item.$id, item.bestSeller)}
+                                                    >
+                                                        {item.bestSeller ? 'Remove Best Seller' : 'Mark as Best Seller'}
+                                                    </Button>
+                                                    <Button
+                                                        variant="outlined"
+                                                        color="error"
+                                                        size="medium"
+                                                        sx={{
+                                                            minHeight: { xs: 44, sm: 36 },
+                                                            fontSize: { xs: '0.95rem', sm: '0.875rem' },
+                                                            flex: 1,
+                                                        }}
+                                                        onClick={() => openDeleteDialog(item)}
+                                                    >
+                                                        Delete
+                                                    </Button>
+                                                </Box>
+                                            </CardContent>
+                                        </Card>
+                                    </Grid>
+                                ))}
+                            </Grid>
+                        </Box>
+                    );
+                })()}
 
                 {/* Uncategorized Section - Always show this section */}
                 <Box sx={{ mb: 4 }}>
