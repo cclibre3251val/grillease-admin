@@ -7,6 +7,9 @@ export default defineConfig({
   server: {
     port: 5173,
   },
+  optimizeDeps: {
+    include: ['@emotion/react', '@emotion/styled', '@mui/material'],
+  },
   build: {
     outDir: 'dist',
     sourcemap: false,
