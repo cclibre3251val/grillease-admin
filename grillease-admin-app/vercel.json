@@ -1,0 +1,19 @@
+{
+  "framework": "vite",
+  "buildCommand": "vite build",
+  "outputDirectory": "dist",
+  "installCommand": "npm install",
+  "env": {
+    "VITE_APPWRITE_ENDPOINT": "https://sgp.cloud.appwrite.io/v1",
+    "VITE_APPWRITE_PROJECT": "grillease",
+    "VITE_APPWRITE_DATABASE_ID": "grillease-db",
+    "VITE_APPWRITE_USERS_COLLECTION_ID": "users",
+    "VITE_APPWRITE_RESERVATIONS_COLLECTION_ID": "reservation",
+    "VITE_APPWRITE_ORDERS_COLLECTION_ID": "Order",
+    "VITE_APPWRITE_MENU_COLLECTION_ID": "menu",
+    "VITE_APPWRITE_CATEGORIES_COLLECTION_ID": "categories",
+    "VITE_APPWRITE_MESSAGES_COLLECTION_ID": "messages",
+    "VITE_APPWRITE_SALES_COLLECTION_ID": "sales",
+    "VITE_APPWRITE_MENU_BUCKET_ID": "menu-images"
+  }
+}

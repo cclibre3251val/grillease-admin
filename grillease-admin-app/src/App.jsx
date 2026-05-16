@@ -29,7 +29,7 @@ function App() {
       <NotificationProvider>
         <Router>
           <Routes>
-            <Route path="/" element={<Navigate to="/admin/dashboard/orders" />} />
+            <Route path="/" element={<Navigate to="/admin/dashboard" />} />
             <Route path="/admin/login" element={<Login />} />
             <Route
               path="/admin/dashboard/*"

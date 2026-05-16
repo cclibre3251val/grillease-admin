@@ -21,5 +21,5 @@ export default defineConfig({
     },
     chunkSizeWarningLimit: 1000,
   },
-  base: './'
+  base: '/'
 })

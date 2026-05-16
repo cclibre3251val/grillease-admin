@@ -10,24 +10,19 @@ import ReservationManager from './ReservationManager.jsx';
 import MenuManager from './MenuManager.jsx';
 import {
     AppBar, Toolbar, Typography, Button, Drawer, List, ListItem,
-    ListItemText, Container, Box, IconButton, BottomNavigation, BottomNavigationAction
+    ListItemText, Box, IconButton
 } from '@mui/material';
 import Brightness4Icon from '@mui/icons-material/Brightness4';
 import Brightness7Icon from '@mui/icons-material/Brightness7';
 import Snackbar from '@mui/material/Snackbar';
 import MuiAlert from '@mui/material/Alert';
-import { useTheme } from '@mui/material/styles';
-import useMediaQuery from '@mui/material/useMediaQuery';
 import MenuIcon from '@mui/icons-material/Menu';
 import LogoutIcon from '@mui/icons-material/Logout';
 import HomeIcon from '@mui/icons-material/Home';
-import MenuBookIcon from '@mui/icons-material/MenuBook';
-import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
-import EventIcon from '@mui/icons-material/Event';
 import NotificationBell from './NotificationBell.jsx';
 import { useThemeMode } from '../context/ThemeModeContext.jsx';
 
-const drawerWidth = 240;
+const DRAWER_WIDTH = 200;
 
 const DashboardLayout = () => {
     const { logout, user } = useAuth();
@@ -48,31 +43,38 @@ const DashboardLayout = () => {
 
     const handleCloseToast = () => setToast(t => ({ ...t, open: false }));
 
-    const handleDrawerToggle = () => {
-        setMobileOpen(!mobileOpen);
-    };
-
-    // Define nav items based on role
+    // Define nav items
     const baseNavItems = [
-        { name: 'Dashboard Home', path: '/admin/dashboard' },
         { name: 'Order Processing', path: '/admin/dashboard/orders' },
         { name: 'Reservation Management', path: '/admin/dashboard/reservations' },
         { name: 'Menu Management', path: '/admin/dashboard/menu' },
     ];
 
     const drawer = (
-        <Box onClick={handleDrawerToggle} sx={{ textAlign: 'center' }}>
-            <Typography variant="h6" sx={{ my: 2 }}>
-                Grillease Staff
-            </Typography>
+        <Box onClick={() => setMobileOpen(false)}>
+            <Toolbar /> {/* Spacer for AppBar height */}
             <List>
                 {baseNavItems.map((item) => (
                     <ListItem button key={item.name} onClick={() => navigate(item.path)}>
-                        <ListItemText primary={item.name} />
+                        <ListItemText
+                            primary={item.name}
+                            sx={{
+                                '& .MuiListItemText-primary': {
+                                    fontSize: '0.9rem',
+                                    fontWeight: 500
+                                }
+                            }}
+                        />
                     </ListItem>
                 ))}
                 <ListItem button onClick={() => { logout(); navigate('/admin/login'); }}>
-                    <ListItemText primary="Logout" sx={{ color: 'error.main' }} />
+                    <ListItemText
+                        primary="Logout"
+                        sx={{
+                            color: 'error.main',
+                            '& .MuiListItemText-primary': { fontSize: '0.9rem' }
+                        }}
+                    />
                 </ListItem>
             </List>
         </Box>
@@ -83,17 +85,16 @@ const DashboardLayout = () => {
 
             {/* --- Header/AppBar --- */}
             <AppBar position="fixed" sx={{ zIndex: (theme) => theme.zIndex.drawer + 1 }}>
-                <Toolbar>
+                <Toolbar sx={{ minHeight: { xs: 48, sm: 56 }, px: { xs: 1, sm: 2 } }}>
                     <IconButton
                         color="inherit"
-                        aria-label="open drawer"
                         edge="start"
-                        onClick={handleDrawerToggle}
-                        sx={{ mr: 2, display: { sm: 'none' } }}
+                        onClick={() => setMobileOpen(true)}
+                        sx={{ mr: 0.5, display: { sm: 'none' } }}
                     >
                         <MenuIcon />
                     </IconButton>
-                    {/* Logo Space - clickable home button */}
+                    {/* Grillease Logo - clickable home button */}
                     <Button
                         color="inherit"
                         onClick={() => window.open('https://grillease-admin-app.vercel.app', '_blank')}
@@ -101,144 +102,118 @@ const DashboardLayout = () => {
                             textTransform: 'none',
                             display: 'flex',
                             alignItems: 'center',
-                            gap: 0.5,
-                            mr: 2,
+                            gap: 0.3,
+                            mr: 0.5,
+                            px: 0.5,
+                            minWidth: 'auto',
                             '&:hover': { backgroundColor: 'rgba(255,255,255,0.1)' }
                         }}
                     >
-                        <HomeIcon />
-                        <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
+                        <HomeIcon sx={{ fontSize: { xs: 18, sm: 22 } }} />
+                        <Typography variant="h6" sx={{ fontWeight: 'bold', fontSize: { xs: '0.9rem', sm: '1.1rem' } }}>
                             Grillease
                         </Typography>
                     </Button>
-                    <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
-                        Staff Dashboard
+
+                    {/* Staff label next to Grillease */}
+                    <Typography
+                        variant="body2"
+                        sx={{
+                            color: 'rgba(255,255,255,0.7)',
+                            fontSize: { xs: '0.75rem', sm: '0.85rem' },
+                            borderLeft: '1px solid rgba(255,255,255,0.3)',
+                            pl: 1,
+                            mr: 1,
+                        }}
+                    >
+                        Staff
                     </Typography>
+
+                    {/* Spacer to push items right */}
+                    <Box sx={{ flexGrow: 1 }} />
+
+                    {/* Theme toggle */}
+                    <IconButton
+                        size="small"
+                        color="inherit"
+                        onClick={() => setMode(mode === 'light' ? 'dark' : 'light')}
+                        sx={{ ml: 0.5 }}
+                    >
+                        {mode === 'light' ? <Brightness4Icon fontSize="small" /> : <Brightness7Icon fontSize="small" />}
+                    </IconButton>
 
                     {/* Notification bell */}
                     <NotificationBell />
 
-                    {/* Theme toggle */}
-                    <IconButton
-                        sx={{ ml: 1 }}
-                        color="inherit"
-                        onClick={() => setMode(mode === 'light' ? 'dark' : 'light')}
-                    >
-                        {mode === 'light' ? <Brightness4Icon /> : <Brightness7Icon />}
-                    </IconButton>
-
                     <Button
                         color="inherit"
+                        size="small"
                         startIcon={<LogoutIcon />}
                         onClick={() => { logout(); navigate('/admin/login'); }}
-                        sx={{ display: { xs: 'none', sm: 'flex' } }}
+                        sx={{ display: { xs: 'none', sm: 'flex' }, ml: 0.5, fontSize: '0.8rem' }}
                     >
                         Logout
                     </Button>
                 </Toolbar>
             </AppBar>
 
-            {/* --- Sidebar/Drawer --- */}
-            <Box
-                component="nav"
-                sx={{ width: { sm: drawerWidth }, flexShrink: { sm: 0 } }}
+            {/* Mobile Drawer (temporary) */}
+            <Drawer
+                variant="temporary"
+                open={mobileOpen}
+                onClose={() => setMobileOpen(false)}
+                ModalProps={{ keepMounted: true }}
+                sx={{
+                    display: { xs: 'block', sm: 'none' },
+                    '& .MuiDrawer-paper': { boxSizing: 'border-box', width: DRAWER_WIDTH },
+                }}
             >
-                {/* Mobile Drawer */}
-                <Drawer
-                    variant="temporary"
-                    open={mobileOpen}
-                    onClose={handleDrawerToggle}
-                    ModalProps={{ keepMounted: true }}
-                    sx={{
-                        display: { xs: 'block', sm: 'none' },
-                        '& .MuiDrawer-paper': { boxSizing: 'border-box', width: drawerWidth },
-                    }}
-                >
-                    {drawer}
-                </Drawer>
-                {/* Desktop Drawer */}
-                <Drawer
-                    variant="permanent"
-                    sx={{
-                        display: { xs: 'none', sm: 'block' },
-                        '& .MuiDrawer-paper': { boxSizing: 'border-box', width: drawerWidth },
-                    }}
-                    open
-                >
-                    {drawer}
-                </Drawer>
-            </Box>
+                {drawer}
+            </Drawer>
+
+            {/* Desktop Drawer (permanent) */}
+            <Drawer
+                variant="permanent"
+                sx={{
+                    display: { xs: 'none', sm: 'block' },
+                    '& .MuiDrawer-paper': { boxSizing: 'border-box', width: DRAWER_WIDTH },
+                    width: DRAWER_WIDTH,
+                    flexShrink: 0,
+                }}
+                open
+            >
+                {drawer}
+            </Drawer>
 
             {/* --- Main Content Area --- */}
             <Box
                 component="main"
                 sx={{
                     flexGrow: 1,
-                    p: 3,
-                    width: { sm: `calc(100% - ${drawerWidth}px)` },
-                    mt: 8 // Space for the fixed AppBar
+                    p: { xs: 2, sm: 3 },
+                    width: { sm: `calc(100% - ${DRAWER_WIDTH}px)` },
+                    ml: { sm: `${DRAWER_WIDTH}px` },
+                    mt: { xs: 6, sm: 7 },
+                    minHeight: 'calc(100vh - 56px)',
+                    overflow: 'auto',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
                 }}
             >
-                <Container maxWidth="lg">
+                <Box sx={{ width: '100%', maxWidth: '1200px' }}>
                     <Routes>
-                        {/* Default path (homepage of the dashboard) */}
                         <Route path="/" element={<DashboardStats />} />
-
-                        {/* The core management views */}
                         <Route path="/orders" element={<OrderManager />} />
                         <Route path="/reservations" element={<ReservationManager />} />
                         <Route path="/menu" element={<MenuManager />} />
                     </Routes>
-                </Container>
+                </Box>
             </Box>
 
-            {/* Bottom navigation for small screens */}
-            {/** Show only on xs/small screens */}
-            <MobileBottomNav navigate={navigate} />
             <Snackbar open={toast.open} autoHideDuration={4000} onClose={handleCloseToast} anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}>
                 <MuiAlert elevation={6} variant="filled" onClose={handleCloseToast} severity={toast.severity}>{toast.message}</MuiAlert>
             </Snackbar>
-        </Box>
-    );
-};
-
-const MobileBottomNav = ({ navigate }) => {
-    const theme = useTheme();
-    const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
-    const [value, setValue] = useState('/admin/dashboard');
-
-    useEffect(() => {
-        const handler = (e) => {
-            if (!e?.detail) return;
-            const detail = e.detail;
-            if (detail === 'orders') navigate('/admin/dashboard/orders');
-            if (detail === 'reservations') navigate('/admin/dashboard/reservations');
-        };
-        window.addEventListener('navigate', handler);
-        return () => window.removeEventListener('navigate', handler);
-    }, [navigate]);
-
-    if (!isMobile) return null;
-
-    return (
-        <Box sx={{ position: 'fixed', left: 0, right: 0, bottom: 0, zIndex: (t) => t.zIndex.appBar }}>
-            <BottomNavigation
-                showLabels
-                value={value}
-                onChange={(event, newValue) => {
-                    setValue(newValue);
-                    if (newValue === 'home') {
-                        window.open('https://grillease-admin-app.vercel.app', '_blank');
-                    } else {
-                        navigate(newValue);
-                    }
-                }}
-            >
-                <BottomNavigationAction label="Grillease" value="home" icon={<HomeIcon />} />
-                <BottomNavigationAction label="Order Processing" value="/admin/dashboard/orders" icon={<ShoppingCartIcon />} />
-                <BottomNavigationAction label="Reservation Management" value="/admin/dashboard/reservations" icon={<EventIcon />} />
-                <BottomNavigationAction label="Menu Management" value="/admin/dashboard/menu" icon={<MenuBookIcon />} />
-            </BottomNavigation>
         </Box>
     );
 };
