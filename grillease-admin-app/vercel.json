@@ -1,5 +1,6 @@
 {
   "framework": "vite",
+  "installCommand": "npm install --include=dev",
   "outputDirectory": "dist",
   "env": {
     "VITE_APPWRITE_ENDPOINT": "https://sgp.cloud.appwrite.io/v1",
